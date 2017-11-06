@@ -1,0 +1,94 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:emojicon="http://schemas.android.com/tools"
+    android:layout_marginTop="5dp"
+    android:layout_height="wrap_content"
+    android:layout_width="match_parent"
+    android:id="@+id/Relaymsgrow"
+    android:background="@android:color/background_light"
+    android:minWidth="25px"
+    android:minHeight="25px">
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:id="@+id/laymsgrow"
+        android:clickable="true"
+        android:minWidth="25px"
+        android:minHeight="25px"
+        android:paddingBottom="5dp"
+        android:paddingTop="5dp"
+        android:layout_marginLeft="10dp"
+        android:layout_marginRight="10dp"
+        android:orientation="horizontal">
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:layout_gravity="center_vertical">
+            <de.hdodenhof.circleimageview.CircleImageView
+                android:id="@+id/userimg"
+                android:layout_width="50dp"
+                android:layout_height="50dp"
+                android:layout_marginRight="10dp"/>
+        </LinearLayout>
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:layout_weight="1">
+            <RelativeLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content" >
+                <TextView
+                    android:id="@+id/txtSenderName"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginLeft="0.0dp"
+                    android:gravity="left"
+                    android:textColor="#000000"
+                    android:textSize="15dp" />
+                <TextView
+                    android:id="@+id/TxtTime"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="right"
+                    android:layout_weight="1"
+                    android:layout_alignParentRight="true"
+                    android:textSize="12dp" >
+                </TextView>
+            </RelativeLayout>
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical">
+
+                <RelativeLayout
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content">
+
+                    <hani.momanii.supernova_emoji_library.Helper.EmojiconTextView
+                        android:id="@+id/txtMsgMessage"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginRight="30dp"
+                        android:ellipsize="end"
+                        android:gravity="center_vertical"
+                        android:maxLines="1"
+                        android:singleLine="false"
+                        android:textColor="#000000"
+                        android:textSize="15dp"
+                        emojicon:emojiconSize="24sp" />
+
+                    <ImageView
+                        android:id="@+id/imgdelete"
+                        android:layout_width="20dp"
+                        android:layout_height="25dp"
+                        android:layout_alignParentRight="true"
+                        android:layout_gravity="right"
+                        android:layout_weight="1"
+                        android:src="@drawable/delete1"></ImageView>
+                </RelativeLayout>
+            </LinearLayout>
+        </LinearLayout>
+    </LinearLayout>
+</RelativeLayout>

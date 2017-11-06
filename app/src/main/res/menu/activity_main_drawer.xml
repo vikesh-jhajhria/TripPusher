@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <group android:checkableBehavior="single">
+        <item
+            android:id="@+id/nav_Custom_Search"
+            android:title="Custom Search" />
+        <item
+            android:id="@+id/nav_Post_Trip"
+            android:title="Post Trip" />
+        <item
+            android:id="@+id/Base_Trip_Ads"
+            android:title="Base Trip Ads" />
+        <item
+            android:id="@+id/nav_Message"
+            android:title="Message" />
+        <item
+            android:id="@+id/nav_Notification"
+            android:title="Notification" />
+        <item
+            android:id="@+id/nav_Setting"
+            android:title="Setting" />
+        <item
+            android:id="@+id/nav_My_Trips"
+            android:title="My Trips" />
+        <item
+            android:id="@+id/nav_Logout"
+            android:title="Logout" />
+    </group>
+
+    <!--<item android:title="Communicate">
+        <menu>
+            <item
+                android:id="@+id/nav_share"
+                android:icon="@drawable/ic_menu_share"
+                android:title="Share" />
+            <item
+
+                android:id="@+id/nav_send"
+                android:icon="@drawable/ic_popup_reminder"
+                android:title="Send" />
+        </menu>
+    </item>-->
+
+</menu>

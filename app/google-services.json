@@ -1,0 +1,43 @@
+{
+  "project_info": {
+    "project_number": "127036118697",
+    "firebase_url": "https://trippusher-fd2f8.firebaseio.com",
+    "project_id": "trippusher-fd2f8",
+    "storage_bucket": "trippusher-fd2f8.appspot.com"
+  },
+  "client": [
+
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:127036118697:android:e06530b8a81e7942",
+        "android_client_info": {
+          "package_name": "com.trippusher"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "127036118697-f8kbf2rr8dme5n82d4ig052sajhcio15.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDc6v7L-jAfVgeTvUqgTznEhC6KVYuKpNU"
+        }
+      ],
+      "services": {
+        "analytics_service": {
+          "status": 1
+        },
+        "appinvite_service": {
+          "status": 1,
+          "other_platform_oauth_client": []
+        },
+        "ads_service": {
+          "status": 2
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

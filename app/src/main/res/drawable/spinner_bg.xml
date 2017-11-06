@@ -1,0 +1,18 @@
+﻿<?xml version="1.0" encoding="UTF-8"?>
+<selector xmlns:android="http://schemas.android.com/apk/res/android">
+  <item>
+    <layer-list>
+      <item>
+        <shape>
+          <gradient android:type="linear" android:startColor="#fff3f3f3" android:endColor="#fff3f3f3" android:angle="90"/>
+          <stroke android:color="#fff3f3f3" android:width="1dp"/>
+          <corners android:radius="3dp"/>
+          <padding android:top="10dp" android:right="5dp" android:left="5dp" android:bottom="10dp"/>
+        </shape>
+      </item>
+      <item>
+        <bitmap android:src="@drawable/icon_spinner_16x16" android:gravity="center_vertical|right"/>
+      </item>
+    </layer-list>
+  </item>
+</selector>

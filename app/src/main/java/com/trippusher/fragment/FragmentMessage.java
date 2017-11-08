@@ -7,7 +7,6 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Color;
 import android.graphics.Typeface;
-import android.graphics.drawable.BitmapDrawable;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
@@ -32,11 +31,12 @@ import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
-import com.google.firebase.database.Query;
 import com.google.firebase.database.ValueEventListener;
 import com.trippusher.AppStatus;
 import com.trippusher.R;
 import com.trippusher.activity.ActivityChat;
+import com.trippusher.vo.ConversationVo;
+import com.trippusher.vo.MessageVo;
 
 import java.io.InputStream;
 import java.net.URL;
@@ -44,11 +44,8 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
-import java.util.Collections;
-import java.util.Comparator;
 import java.util.Date;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 
@@ -59,10 +56,10 @@ import hani.momanii.supernova_emoji_library.Helper.EmojiconTextView;
  */
 
 public class FragmentMessage extends Fragment {
-    private RecyclerView RvMessagelst;
-    private AdapterMessage Adapter;
-    private List<Messageitemlist> Messageitemlist = new ArrayList<>();
-    private List<list1> list1 = new ArrayList<>();
+    private RecyclerView rv_conversation;
+    private ConversationAdapter adapter;
+    //private List<Messageitemlist> Messageitemlist = new ArrayList<>();
+    //private List<list1> list1 = new ArrayList<>();
     SharedPreferences prefs;
     SharedPreferences.Editor editor;
     String AirlineId, BaseAirportId, UserId, MessageResult, password;
@@ -72,6 +69,7 @@ public class FragmentMessage extends Fragment {
     String fcm_id;
     //static int count = 0;
     String values, LastMessage, Location, timestamp, IsRead, FromId, ToId;
+    ArrayList<ConversationVo> conversationList = new ArrayList<>();
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
@@ -84,12 +82,12 @@ public class FragmentMessage extends Fragment {
         fcm_id = prefs.getString("fcm_id", null);
         password = prefs.getString("password", null);
         View rootView = inflater.inflate(R.layout.fragment_message, container, false);
-        RvMessagelst = (RecyclerView) rootView.findViewById(R.id.RvMessagelst);
+        rv_conversation = (RecyclerView) rootView.findViewById(R.id.RvMessagelst);
         LinearLayoutManager manager = new LinearLayoutManager(getContext());
-        RvMessagelst.setHasFixedSize(true);
-        RvMessagelst.setLayoutManager(manager);
-        Adapter = new AdapterMessage(Messageitemlist);
-        RvMessagelst.setAdapter(Adapter);
+        rv_conversation.setHasFixedSize(true);
+        rv_conversation.setLayoutManager(manager);
+        adapter = new ConversationAdapter(conversationList);
+        rv_conversation.setAdapter(adapter);
         return rootView;
     }
 
@@ -100,72 +98,32 @@ public class FragmentMessage extends Fragment {
         if (AppStatus.getInstance(getContext()).isOnline()) {
             usersRefs = database.getReference("users");
             conversationsRefs = database.getReference("conversations");
-            myRefs = database.getReference("users").child(fcm_id).child("conversations");
+            myRefs = database.getReference("new_user").child("user1").child("conversations");
             myRefs.addValueEventListener(new ValueEventListener() {
                 @Override
                 public void onDataChange(DataSnapshot dataSnapshot) {
-                    for (DataSnapshot items : dataSnapshot.getChildren()) {
-                        String key = items.getKey().toString();
-                        String values = items.child("location").getValue().toString();
-                        list1.add(new list1(
-                                key,
-                                values));
-                        myMap.put(key, values);
-                    }
-                    for (Map.Entry<String, String> entry : myMap.entrySet()) {
-                        String Sendeerids = entry.getKey();
-                        values = entry.getValue();
-                        Query lastQuery = conversationsRefs.child(values).orderByKey().limitToLast(1);
-                        lastQuery.addValueEventListener(new ValueEventListener() {
-                            @Override
-                            public void onDataChange(DataSnapshot dataSnapshot) {
-                                for (DataSnapshot item : dataSnapshot.getChildren()) {
-                                    try {
-                                        Location = dataSnapshot.getKey();
-                                        LastMessage = item.child("content").getValue().toString();
-                                        FromId = item.child("fromID").getValue().toString();
-                                        IsRead = item.child("isRead").getValue() == null ? "false": item.child("isRead").getValue().toString();
-                                        timestamp = item.child("timestamp").getValue().toString();
-                                        ToId = item.child("toID").getValue().toString();
-                                        for (list1 items : list1) {
-                                            if (Location.equals(items.Location)) {
-                                                for (Messageitemlist listItem : Messageitemlist) {
-                                                    if (listItem.SendersFcmId.equalsIgnoreCase(items.SenderUID)) {
-                                                        Messageitemlist.remove(listItem);
-                                                        Adapter.notifyDataSetChanged();
-                                                        break;
-                                                    }
-                                                }
-                                                Messageitemlist.add(new Messageitemlist(
-                                                        items.SenderUID,
-                                                        items.Location,
-                                                        LastMessage,
-                                                        FromId,
-                                                        IsRead,
-                                                        timestamp,
-                                                        ToId));
-                                            }
-                                        }
-                                        Collections.sort(Messageitemlist, new Comparator<Messageitemlist>() {
-                                            @Override
-                                            public int compare(final Messageitemlist object1, final Messageitemlist object2) {
-                                                return object2.Time.compareTo(object1.Time);
-                                            }
-                                        });
-                                    } catch (Exception e) {
-                                        e.printStackTrace();
-                                    }
+                    conversationList.clear();
+                    for (DataSnapshot item : dataSnapshot.getChildren()) {
+                        ConversationVo conversationVo = new ConversationVo();
+                        conversationVo.setName(item.child("name").getValue().toString());
+                        conversationVo.setEmail(item.child("email").getValue().toString());
 
-                                }
-                                Adapter.notifyDataSetChanged();
-                            }
-
-                            @Override
-                            public void onCancelled(DatabaseError error) {
-                                Log.w("TAG", "Failed to read value.", error.toException());
-                            }
-                        });
+                       if(item.child("messages").getChildrenCount() > 0) {
+                           ArrayList<MessageVo> msgArr = new ArrayList<>();
+                           for (DataSnapshot msg : item.child("messages").getChildren()) {
+                               MessageVo messageVo = new MessageVo();
+                               messageVo.setMessage_from(msg.child("from").getValue().toString());
+                               messageVo.setMessage_to(msg.child("to").getValue().toString());
+                               messageVo.setMessage_time(msg.child("time").getValue().toString());
+                               messageVo.setMessage_text(msg.child("text").getValue().toString());
+                               messageVo.setIs_read(msg.child("isRead").getValue().toString());
+                               msgArr.add(messageVo);
+                           }
+                           conversationVo.setMessageList(msgArr);
+                       }
+                        conversationList.add(conversationVo);
                     }
+                    adapter.notifyDataSetChanged();
                 }
 
                 @Override
@@ -176,48 +134,17 @@ public class FragmentMessage extends Fragment {
         } else {
             Toast.makeText(getContext(), "Please check network connection and try again", Toast.LENGTH_SHORT).show();
         }
-        Adapter.notifyDataSetChanged();
+        adapter.notifyDataSetChanged();
     }
 
-    public class list1 {
-        private String SenderUID;
-        private String Location;
 
-        public list1(String Senderuid, String locations) {
-            this.SenderUID = Senderuid;
-            this.Location = locations;
-        }
-    }
 
-    public class Messageitemlist implements Comparable<Messageitemlist> {
-        public String SendersFcmId;
-        public String Location;
-        public String LastMessages;
-        public String ChatFromId;
-        public String IssRead;
-        public String Time;
-        public String ChatToId;
 
-        public Messageitemlist(String senderFcmId, String location, String lastMessage, String chatFromId, String isRead, String time, String chatToId) {
-            this.SendersFcmId = senderFcmId;
-            this.Location = location;
-            this.LastMessages = lastMessage;
-            this.ChatFromId = chatFromId;
-            this.IssRead = isRead;
-            this.Time = time;
-            this.ChatToId = chatToId;
-        }
 
-        @Override
-        public final int compareTo(Messageitemlist f) {
-            return this.Time.compareTo(f.Time);
-        }
-    }
+    public class ConversationAdapter extends RecyclerView.Adapter<ConversationAdapter.MyViewHolder> {
+        private ArrayList<ConversationVo> mModelList;
 
-    public class AdapterMessage extends RecyclerView.Adapter<AdapterMessage.MyViewHolder> {
-        private List<FragmentMessage.Messageitemlist> mModelList;
-
-        public AdapterMessage(List<FragmentMessage.Messageitemlist> modelList) {
+        public ConversationAdapter(ArrayList<ConversationVo> modelList) {
             mModelList = modelList;
         }
 
@@ -229,88 +156,28 @@ public class FragmentMessage extends Fragment {
 
         @Override
         public void onBindViewHolder(final MyViewHolder ViewHolder, final int position) {
-            final FragmentMessage.Messageitemlist model = mModelList.get(position);
+            final ConversationVo model = mModelList.get(position);
 
             //ViewHolder.Image.setImageResource(R.drawable.userc);
+            ViewHolder.txtMsgName.setText(model.getName());
+            MessageVo lastMessage = model.getMessageList().get(model.getMessageList().size()-1);
+            ViewHolder.txtMsgMessage.setText(lastMessage.getMessage_text());
 
-            usersRefs.child(model.SendersFcmId).child("credentials").addValueEventListener(new ValueEventListener() {
-                @Override
-                public void onDataChange(DataSnapshot dataSnapshot) {
-                    if (dataSnapshot != null) {
-                        Map map1 = (Map) dataSnapshot.getValue();
-                        if (map1 != null) {
-                            String SenderName = (String) map1.get("name");
-                            ViewHolder.txtMsgName.setText(SenderName);
-                            String profilePicLink = (String) map1.get("profilePicLink");
-                            new AsyncTask<String, String, Bitmap>() {
-                                @Override
-                                protected Bitmap doInBackground(String... args) {
-                                    try {
-                                        String pic = args[0];
-                                        InputStream in = new URL(pic).openStream();
-                                        Bitmap b = BitmapFactory.decodeStream(in);
-                                        return b;
-                                    } catch (Exception e) {
-                                        // log error
-                                    }
-                                    return null;
-                                }
 
-                                @Override
-                                protected void onPostExecute(Bitmap result) {
-                                    if ( result!= null) {
-                                        ViewHolder.Image.setDrawingCacheEnabled(true);
-                                        ViewHolder.Image.setImageBitmap(result);
-                                    }
-                                }
-                            }.execute(profilePicLink);
-                        }
-                    }
-                }
-
-                @Override
-                public void onCancelled(DatabaseError error) {
-                    Log.w("TAG", "Failed to read value.", error.toException());
-                }
-            });
-            if (model.IssRead.equals("false")) {
-                if (!model.ChatFromId.equals(fcm_id)) {
+            if (lastMessage.getIs_read().equals("false")) {
+                if (!lastMessage.getMessage_from().equals(fcm_id)) {
                     ViewHolder.txtMsgName.setTypeface(null, Typeface.BOLD);
                     ViewHolder.txtMsgMessage.setTextColor(Color.BLUE);
-                    conversationsRefs.child(model.Location).addValueEventListener(new ValueEventListener() {
-                        @Override
-                        public void onDataChange(DataSnapshot dataSnapshot) {
-                            int count = 0;
-                            for (DataSnapshot item : dataSnapshot.getChildren()) {
-                                try {
-                                    IsRead = item.child("isRead").getValue().toString();
-                                    if (IsRead.equals("false")) {
-                                        count++;
-                                    }
-                                } catch (Exception e) {
-                                    e.printStackTrace();
-                                }
-                            }
-                            String name = ViewHolder.txtMsgName.getText().toString();
-                            name = name.replaceAll("\\(.*?\\) ?", "");
-                            ViewHolder.txtMsgName.setText(Html.fromHtml(name + " <font color='#0000FF'>" + "(" + count + ")" + " </font>"));
-                        }
-
-                        @Override
-                        public void onCancelled(DatabaseError error) {
-                            Log.w("TAG", "Failed to read value.", error.toException());
-                        }
-                    });
                 }
             } else {
-                if (!model.ChatFromId.equals(fcm_id)) {
+                if (!lastMessage.getMessage_from().equals(fcm_id)) {
                     ViewHolder.txtMsgName.setTypeface(null, Typeface.NORMAL);
                     ViewHolder.txtMsgMessage.setTextColor(Color.BLACK);
                 }
             }
             Calendar cal = Calendar.getInstance(Locale.ENGLISH);
             Calendar c = Calendar.getInstance();
-            cal.setTimeInMillis(Long.parseLong(model.Time) * 1000L);
+            cal.setTimeInMillis(Long.parseLong(lastMessage.getMessage_time()) * 1000L);
             String date = DateFormat.format("dd-MM-yyyy hh:mm aa", cal).toString();
             String TxtTime1 = DateFormat.format("MM/dd/yyyy hh:mm aa", cal).toString();
             String TxtTime2 = DateFormat.format("hh:mm aa", cal).toString();
@@ -334,8 +201,8 @@ public class FragmentMessage extends Fragment {
                 ex.printStackTrace();
             }
 
-            ViewHolder.txtMsgMessage.setText(model.LastMessages);
-            ViewHolder.llrow.setOnClickListener(new View.OnClickListener() {
+
+            /*ViewHolder.llrow.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View view) {
                     Intent intent = new Intent(getContext(), ActivityChat.class);
@@ -345,8 +212,8 @@ public class FragmentMessage extends Fragment {
                     getContext().startActivity(intent);
 
                 }
-            });
-            ViewHolder.DeleteAll.setOnClickListener(new View.OnClickListener() {
+            });*/
+            /*ViewHolder.DeleteAll.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View view) {
                     prefs = PreferenceManager.getDefaultSharedPreferences(view.getContext());
@@ -358,7 +225,7 @@ public class FragmentMessage extends Fragment {
                                 public void onClick(DialogInterface dialog, int id) {
                                     conversationsRefs.child(model.Location).removeValue();
                                     mModelList.remove(position);
-                                    Adapter.notifyItemRemoved(position);
+                                    adapter.notifyItemRemoved(position);
                                 }
                             })
                             .setNegativeButton("No", new DialogInterface.OnClickListener() {
@@ -375,7 +242,7 @@ public class FragmentMessage extends Fragment {
                     alert.setCustomTitle(title);
                     alert.show();
                 }
-            });
+            });*/
         }
 
 

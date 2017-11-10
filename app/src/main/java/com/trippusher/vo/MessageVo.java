@@ -7,55 +7,67 @@ import android.support.annotation.NonNull;
  */
 
 public class MessageVo implements Comparable<MessageVo>{
-    private String message_from;
-    private String message_to;
-    private String message_time;
-    private String message_text;
+    private String content;
+    private String fromID;
+    private Boolean isRead;
+    private int timestamp;
+    private String toID;
+    private String type;
 
-    public String getMessage_from() {
-        return message_from;
+    public MessageVo() {
+        // empty constructor
     }
 
-    public void setMessage_from(String message_from) {
-        this.message_from = message_from;
+    public String getcontent() {
+        return content;
     }
 
-    public String getMessage_to() {
-        return message_to;
+    public void setcontent(String contents) {
+        content = contents;
     }
 
-    public void setMessage_to(String message_to) {
-        this.message_to = message_to;
+    public String getfromID() {
+        return fromID;
     }
 
-    public String getMessage_time() {
-        return message_time;
+    public void setfromID(String fromid) {
+        fromID = fromid;
     }
 
-    public void setMessage_time(String message_time) {
-        this.message_time = message_time;
+    public Boolean getisRead() {
+        return isRead;
     }
 
-    public String getMessage_text() {
-        return message_text;
+    public void setisRead(Boolean isread) {
+        isRead = isread;
     }
 
-    public void setMessage_text(String message_text) {
-        this.message_text = message_text;
+    public int gettimestamp() {
+        return timestamp;
     }
 
-    public String getIs_read() {
-        return is_read;
+    public void settimestamp(int timestamps) {
+        timestamp = timestamps;
     }
 
-    public void setIs_read(String is_read) {
-        this.is_read = is_read;
+    public String gettoID() {
+        return toID;
     }
 
-    private String is_read;
+    public void settoID(String toid) {
+        toID = toid;
+    }
+
+    public String gettype() {
+        return type;
+    }
+
+    public void settype(String types) {
+        type = types;
+    }
 
     @Override
     public int compareTo(@NonNull MessageVo messageVo) {
-        return this.getMessage_time().compareTo(messageVo.getMessage_time());
+        return this.gettimestamp()+"".compareTo(messageVo.gettimestamp()+"");
     }
 }

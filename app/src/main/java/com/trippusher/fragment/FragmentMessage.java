@@ -31,6 +31,7 @@ import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.Query;
 import com.google.firebase.database.ValueEventListener;
 import com.trippusher.AppStatus;
 import com.trippusher.R;
@@ -63,7 +64,7 @@ public class FragmentMessage extends Fragment {
     SharedPreferences prefs;
     SharedPreferences.Editor editor;
     String AirlineId, BaseAirportId, UserId, MessageResult, password;
-    private DatabaseReference myRefs, usersRefs, conversationsRefs;
+    private DatabaseReference myRefs;
     private FirebaseDatabase database;
     Map<String, String> myMap = new HashMap<>();
     String fcm_id;
@@ -96,34 +97,66 @@ public class FragmentMessage extends Fragment {
         super.onResume();
         database = FirebaseDatabase.getInstance();
         if (AppStatus.getInstance(getContext()).isOnline()) {
-            usersRefs = database.getReference("users");
-            conversationsRefs = database.getReference("conversations");
-            myRefs = database.getReference("new_user").child("user1").child("conversations");
+            myRefs = database.getReference("new_user").child(fcm_id).child("conversations");
             myRefs.addValueEventListener(new ValueEventListener() {
                 @Override
                 public void onDataChange(DataSnapshot dataSnapshot) {
                     conversationList.clear();
-                    for (DataSnapshot item : dataSnapshot.getChildren()) {
-                        ConversationVo conversationVo = new ConversationVo();
-                        conversationVo.setName(item.child("name").getValue().toString());
-                        conversationVo.setEmail(item.child("email").getValue().toString());
-
-                       if(item.child("messages").getChildrenCount() > 0) {
-                           ArrayList<MessageVo> msgArr = new ArrayList<>();
-                           for (DataSnapshot msg : item.child("messages").getChildren()) {
-                               MessageVo messageVo = new MessageVo();
-                               messageVo.setMessage_from(msg.child("from").getValue().toString());
-                               messageVo.setMessage_to(msg.child("to").getValue().toString());
-                               messageVo.setMessage_time(msg.child("time").getValue().toString());
-                               messageVo.setMessage_text(msg.child("text").getValue().toString());
-                               messageVo.setIs_read(msg.child("isRead").getValue().toString());
-                               msgArr.add(messageVo);
-                           }
-                           conversationVo.setMessageList(msgArr);
-                       }
+                    for (final DataSnapshot conversation : dataSnapshot.getChildren()) {
+                        final ConversationVo conversationVo = new ConversationVo();
+                        conversationVo.setKey(conversation.getKey());
                         conversationList.add(conversationVo);
+
+                        Query lastQuery = myRefs.child(conversation.getKey()).child("messages").orderByKey().limitToLast(1);
+                        lastQuery.addValueEventListener(new ValueEventListener() {
+                            @Override
+                            public void onDataChange(DataSnapshot dataSnapshot) {
+                                for (DataSnapshot msg : dataSnapshot.getChildren()) {
+                                    MessageVo data = new MessageVo();
+                                    data.setcontent(msg.child("content").getValue().toString());
+                                    data.setfromID(msg.child("fromID").getValue().toString());
+                                    data.setisRead(Boolean.parseBoolean(msg.child("isRead").getValue().toString()));
+                                    data.settimestamp(Integer.parseInt(msg.child("timestamp").getValue().toString()));
+                                    data.settoID(msg.child("toID").getValue().toString());
+                                    data.settype(msg.child("type").getValue().toString());
+                                    conversationVo.setMessageVo(data);
+
+                                    adapter.notifyDataSetChanged();
+                                }
+
+                            }
+
+                            @Override
+                            public void onCancelled(DatabaseError databaseError) {
+
+                            }
+
+                        });
                     }
-                    adapter.notifyDataSetChanged();
+
+                        database.getReference("new_user").addValueEventListener(lastMsgListener = new ValueEventListener() {
+                            @Override
+                            public void onDataChange(DataSnapshot dataSnapshot) {
+                                for(ConversationVo vo : conversationList) {
+                                    for (DataSnapshot user : dataSnapshot.getChildren()) {
+                                        if (user.getKey().equalsIgnoreCase(vo.getKey())) {
+                                            vo.setName(user.child("name").getValue().toString());
+                                            vo.setEmail(user.child("email").getValue().toString());
+                                            break;
+                                        }
+                                    }
+                                }
+                                //database.getReference("new_user").removeEventListener(lastMsgListener);
+                                adapter.notifyDataSetChanged();
+
+                            }
+
+                            @Override
+                            public void onCancelled(DatabaseError databaseError) {
+
+                            }
+                        });
+
                 }
 
                 @Override
@@ -134,9 +167,8 @@ public class FragmentMessage extends Fragment {
         } else {
             Toast.makeText(getContext(), "Please check network connection and try again", Toast.LENGTH_SHORT).show();
         }
-        adapter.notifyDataSetChanged();
     }
-
+    ValueEventListener lastMsgListener = null;
 
 
 
@@ -158,62 +190,62 @@ public class FragmentMessage extends Fragment {
         public void onBindViewHolder(final MyViewHolder ViewHolder, final int position) {
             final ConversationVo model = mModelList.get(position);
 
-            //ViewHolder.Image.setImageResource(R.drawable.userc);
+            ViewHolder.Image.setImageResource(R.drawable.userc);
             ViewHolder.txtMsgName.setText(model.getName());
-            MessageVo lastMessage = model.getMessageList().get(model.getMessageList().size()-1);
-            ViewHolder.txtMsgMessage.setText(lastMessage.getMessage_text());
+            MessageVo lastMessage = model.getMessageVo();
+            if(lastMessage != null) {
+                ViewHolder.txtMsgMessage.setText(lastMessage.getcontent());
 
 
-            if (lastMessage.getIs_read().equals("false")) {
-                if (!lastMessage.getMessage_from().equals(fcm_id)) {
-                    ViewHolder.txtMsgName.setTypeface(null, Typeface.BOLD);
-                    ViewHolder.txtMsgMessage.setTextColor(Color.BLUE);
+                if (lastMessage.getisRead().equals("false")) {
+                    if (!lastMessage.getfromID().equals(fcm_id)) {
+                        ViewHolder.txtMsgName.setTypeface(null, Typeface.BOLD);
+                        ViewHolder.txtMsgMessage.setTextColor(Color.BLUE);
+                    }
+                } else {
+                    if (!lastMessage.getfromID().equals(fcm_id)) {
+                        ViewHolder.txtMsgName.setTypeface(null, Typeface.NORMAL);
+                        ViewHolder.txtMsgMessage.setTextColor(Color.BLACK);
+                    }
                 }
-            } else {
-                if (!lastMessage.getMessage_from().equals(fcm_id)) {
-                    ViewHolder.txtMsgName.setTypeface(null, Typeface.NORMAL);
-                    ViewHolder.txtMsgMessage.setTextColor(Color.BLACK);
+                Calendar cal = Calendar.getInstance(Locale.ENGLISH);
+                Calendar c = Calendar.getInstance();
+                cal.setTimeInMillis(Long.parseLong(lastMessage.gettimestamp() + "") * 1000L);
+                String date = DateFormat.format("dd-MM-yyyy hh:mm aa", cal).toString();
+                String TxtTime1 = DateFormat.format("MM/dd/yyyy hh:mm aa", cal).toString();
+                String TxtTime2 = DateFormat.format("hh:mm aa", cal).toString();
+                Date currentDate = new Date();
+                c.setTime(currentDate);
+                String date22 = DateFormat.format("dd-MM-yyyy", c).toString();
+                try {
+                    SimpleDateFormat sdf = new SimpleDateFormat("dd-MM-yyyy");
+                    Date date1 = sdf.parse(date22);
+                    Date date2 = sdf.parse(date);
+                    if (date1.after(date2)) {
+                        ViewHolder.TxtTime.setText(TxtTime1);
+                    }
+                    if (date1.before(date2)) {
+                        System.out.println("Date1 is before Date2");
+                    }
+                    if (date1.equals(date2)) {
+                        ViewHolder.TxtTime.setText(TxtTime2);
+                    }
+                } catch (ParseException ex) {
+                    ex.printStackTrace();
                 }
             }
-            Calendar cal = Calendar.getInstance(Locale.ENGLISH);
-            Calendar c = Calendar.getInstance();
-            cal.setTimeInMillis(Long.parseLong(lastMessage.getMessage_time()) * 1000L);
-            String date = DateFormat.format("dd-MM-yyyy hh:mm aa", cal).toString();
-            String TxtTime1 = DateFormat.format("MM/dd/yyyy hh:mm aa", cal).toString();
-            String TxtTime2 = DateFormat.format("hh:mm aa", cal).toString();
-            Date currentDate = new Date();
-            c.setTime(currentDate);
-            String date22 = DateFormat.format("dd-MM-yyyy", c).toString();
-            try {
-                SimpleDateFormat sdf = new SimpleDateFormat("dd-MM-yyyy");
-                Date date1 = sdf.parse(date22);
-                Date date2 = sdf.parse(date);
-                if (date1.after(date2)) {
-                    ViewHolder.TxtTime.setText(TxtTime1);
-                }
-                if (date1.before(date2)) {
-                    System.out.println("Date1 is before Date2");
-                }
-                if (date1.equals(date2)) {
-                    ViewHolder.TxtTime.setText(TxtTime2);
-                }
-            } catch (ParseException ex) {
-                ex.printStackTrace();
-            }
 
-
-            /*ViewHolder.llrow.setOnClickListener(new View.OnClickListener() {
+            ViewHolder.llrow.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View view) {
                     Intent intent = new Intent(getContext(), ActivityChat.class);
-                    intent.putExtra("ChatLocation",model.Location);
-                    intent.putExtra("ReceiverFcmId",model.SendersFcmId);
+                    intent.putExtra("ReceiverFcmId",model.getKey());
                     intent.putExtra("BitmapImage", ViewHolder.Image.getDrawingCache());
                     getContext().startActivity(intent);
 
                 }
-            });*/
-            /*ViewHolder.DeleteAll.setOnClickListener(new View.OnClickListener() {
+            });
+            ViewHolder.DeleteAll.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View view) {
                     prefs = PreferenceManager.getDefaultSharedPreferences(view.getContext());
@@ -223,7 +255,7 @@ public class FragmentMessage extends Fragment {
                     builder.setCancelable(false)
                             .setPositiveButton("Yes", new DialogInterface.OnClickListener() {
                                 public void onClick(DialogInterface dialog, int id) {
-                                    conversationsRefs.child(model.Location).removeValue();
+                                    myRefs.child(model.getKey()).removeValue();
                                     mModelList.remove(position);
                                     adapter.notifyItemRemoved(position);
                                 }
@@ -242,7 +274,7 @@ public class FragmentMessage extends Fragment {
                     alert.setCustomTitle(title);
                     alert.show();
                 }
-            });*/
+            });
         }
 
 

@@ -7,9 +7,20 @@ import java.util.ArrayList;
  */
 
 public class ConversationVo {
-    private String name;
-    private String email;
-    private ArrayList<MessageVo> messageVo;
+
+
+    private String key = "";
+    private String name = "";
+    private String email = "";
+    private MessageVo messageVo;
+
+    public String getKey() {
+        return key;
+    }
+
+    public void setKey(String key) {
+        this.key = key;
+    }
 
     public String getName() {
         return name;
@@ -27,11 +38,11 @@ public class ConversationVo {
         this.email = email;
     }
 
-    public ArrayList<MessageVo> getMessageList() {
+    public MessageVo getMessageVo() {
         return messageVo;
     }
 
-    public void setMessageList(ArrayList<MessageVo> messageVo) {
+    public void setMessageVo(MessageVo messageVo) {
         this.messageVo = messageVo;
     }
 

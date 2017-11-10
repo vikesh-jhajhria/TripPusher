@@ -61,8 +61,7 @@ public class MyFirebaseMessagingService extends FirebaseMessagingService {
                 if (isAppOnForeground() == false) {
                     String[] separated1 = data.split(",");
                     String[] separated2 = separated1[0].trim().split(":");
-                    String[] separated3 = separated1[1].trim().split(":");
-                    sendMessageNotification(body, title, separated2[1].trim(), separated3[1].trim());
+                    sendMessageNotification(body, title, separated2[1].trim());
                 }
             }
             if (Type.equals("t_id")) {
@@ -113,13 +112,12 @@ public class MyFirebaseMessagingService extends FirebaseMessagingService {
         notificationManager.notify(0, notificationBuilder.build());
     }
 
-    private void sendMessageNotification(String messageBody, String Title, String senderUID, String Id) {
+    private void sendMessageNotification(String messageBody, String Title, String senderUID) {
         String username = prefs.getString("username", null);
         String password = prefs.getString("password", null);
         if (username != null && password != null) {
             Bitmap b = null;
             intent = new Intent(this, ActivityChat.class);
-            intent.putExtra("ChatLocation", Id);
             intent.putExtra("ReceiverFcmId", senderUID);
             intent.putExtra("BitmapImage", b);
         } else {

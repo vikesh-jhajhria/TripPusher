@@ -1,5 +1,6 @@
 package com.trippusher.activity;
 
+import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -67,7 +68,7 @@ public class ActivityChat extends AppCompatActivity implements ValueEventListene
     private RelativeLayout RootView;
     private ImageView EmojKeyBord;
     JSONParser jsonParser = new JSONParser();
-    private DatabaseReference myRef2;
+    private DatabaseReference myRef2, msgRef;
     private FirebaseDatabase database;
     String message, ReceiverFcmId, ChatLocation, fcm_id;
     private ArrayList<String> arrayList = new ArrayList<String>();
@@ -124,54 +125,52 @@ public class ActivityChat extends AppCompatActivity implements ValueEventListene
         if (AppStatus.getInstance(ActivityChat.this).isOnline()) {
             database = FirebaseDatabase.getInstance();
             Bundle bundle = getIntent().getExtras();
-            SenderPic = bundle.getParcelable("BitmapImage");
-            ChatLocation = bundle.getString("ChatLocation");
+            SenderPic = null;
             ReceiverFcmId = bundle.getString("ReceiverFcmId");
-            if (SenderPic != null) {
-                myRef2 = database.getReference("conversations").child(ChatLocation);
-                myRef2.addValueEventListener(this);
-            } else {
-                database.getReference("users").child(ReceiverFcmId).child("credentials").addValueEventListener(new ValueEventListener() {
-                    @Override
-                    public void onDataChange(DataSnapshot dataSnapshot) {
-                        if (dataSnapshot != null) {
-                            Map map1 = (Map) dataSnapshot.getValue();
-                            if (map1 != null) {
-                                String profilePicLink = (String) map1.get("profilePicLink");
-                                new AsyncTask<String, String, Void>() {
-                                    Bitmap b;
+            myRef2 = database.getReference("new_user");
+            msgRef = myRef2.child(fcm_id).child("conversations").child(ReceiverFcmId).child("messages");
+            msgRef.addValueEventListener(this);
 
-                                    @Override
-                                    protected Void doInBackground(String... args) {
-                                        try {
-                                            String pic = args[0];
-                                            InputStream in = new URL(pic).openStream();
-                                            b = BitmapFactory.decodeStream(in);
-                                        } catch (Exception e) {
-                                            // log error
-                                        }
-                                        return null;
-                                    }
+            database.getReference("new_user").child(ReceiverFcmId).addValueEventListener(new ValueEventListener() {
+                @Override
+                public void onDataChange(DataSnapshot dataSnapshot) {
+                    if (dataSnapshot != null) {
+                        Map map1 = (Map) dataSnapshot.getValue();
+                        if (map1 != null) {
+                            String profilePicLink = (String) map1.get("profilePicLink");
+                            new AsyncTask<String, String, Void>() {
+                                Bitmap b;
 
-                                    @Override
-                                    protected void onPostExecute(Void result) {
-                                        if (b != null) {
-                                            SenderPic = b;
-                                            myRef2 = database.getReference("conversations").child(ChatLocation);
-                                            myRef2.addValueEventListener(ActivityChat.this);
-                                        }
+                                @Override
+                                protected Void doInBackground(String... args) {
+                                    try {
+                                        String pic = args[0];
+                                        InputStream in = new URL(pic).openStream();
+                                        b = BitmapFactory.decodeStream(in);
+                                    } catch (Exception e) {
+                                        // log error
                                     }
-                                }.execute(profilePicLink);
-                            }
+                                    return null;
+                                }
+
+                                @Override
+                                protected void onPostExecute(Void result) {
+                                    if (b != null) {
+                                        SenderPic = b;
+
+                                    }
+                                }
+                            }.execute(profilePicLink);
                         }
                     }
+                }
 
-                    @Override
-                    public void onCancelled(DatabaseError error) {
-                        Log.w("TAG", "Failed to read value.", error.toException());
-                    }
-                });
-            }
+                @Override
+                public void onCancelled(DatabaseError error) {
+                    Log.w("TAG", "Failed to read value.", error.toException());
+                }
+            });
+
         } else {
             Toast.makeText(ActivityChat.this, "Please check network connection and try again", Toast.LENGTH_SHORT).show();
         }
@@ -181,11 +180,11 @@ public class ActivityChat extends AppCompatActivity implements ValueEventListene
                     if (arrayList.size() > 0) {
                         tempDeleteItemList = new ArrayList<String>();
                         tempDeleteItemList = arrayList;
-                        myRef2.removeEventListener(ActivityChat.this);
+                        msgRef.removeEventListener(ActivityChat.this);
                         for (int j = 0; j < arrayList.size(); j++) {
-                            database.getReference("conversations").child(ChatLocation).child(arrayList.get(j)).removeValue();
+                            database.getReference("new_user").child(fcm_id).child("conversations").child(ReceiverFcmId).child("messages").child(arrayList.get(j)).removeValue();
                         }
-                        myRef2.addValueEventListener(ActivityChat.this);
+                        msgRef.addValueEventListener(ActivityChat.this);
                         deletemsg.setVisibility(View.GONE);
                         imgoverflow.setVisibility(View.VISIBLE);
                         i = 0;
@@ -209,7 +208,7 @@ public class ActivityChat extends AppCompatActivity implements ValueEventListene
                         return false;
                     }
                 });
-                MenuPopupHelper menuHelper = new MenuPopupHelper(ActivityChat.this, (MenuBuilder) menu.getMenu(), deletemsg);
+                @SuppressLint("RestrictedApi") MenuPopupHelper menuHelper = new MenuPopupHelper(ActivityChat.this, (MenuBuilder) menu.getMenu(), deletemsg);
                 menuHelper.setForceShowIcon(true);
                 menuHelper.show();
             }
@@ -218,17 +217,19 @@ public class ActivityChat extends AppCompatActivity implements ValueEventListene
         repaly.setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) {
                 if (!emojEditText.getText().toString().matches("")) {
-                    Boolean boolean1 = Boolean.valueOf("false");
                     int time = (int) (System.currentTimeMillis() / 1000);
                     ChatData data = new ChatData();
                     //ChatList data = new ChatList();
                     data.setcontent(emojEditText.getText().toString());
                     data.setfromID(fcm_id);
-                    data.setisRead(boolean1);
+                    data.setisRead(true);
                     data.settimestamp(time);
                     data.settoID(ReceiverFcmId);
                     data.settype("text");
-                    myRef2.child(myRef2.push().getKey()).setValue(data);
+                    myRef2.child(fcm_id).child("conversations").child(ReceiverFcmId).child("messages").child(myRef2.push().getKey()).setValue(data);
+                    data.setisRead(false);
+                    myRef2.child(ReceiverFcmId).child("conversations").child(fcm_id).child("messages").child(myRef2.push().getKey()).setValue(data);
+                    //myRef2.child(myRef2.push().getKey()).setValue(data);
                     PushNotification pushNotification = new PushNotification();
                     pushNotification.execute(emojEditText.getText().toString());
                     //pushNotification.execute(StringEscapeUtils.escapeJava(emojEditText.getText().toString()));
@@ -293,12 +294,12 @@ public class ActivityChat extends AppCompatActivity implements ValueEventListene
                     }
                     if (!isItemDeleted && item.child("isRead").getValue().toString().equalsIgnoreCase("false")) {
                         Boolean boolean2 = Boolean.valueOf("true");
-                        myRef2.child(item.getKey()).child("isRead").setValue(boolean2);
+                        msgRef.child(item.getKey()).child("isRead").setValue(boolean2);
                     }
                 }
                 if (item.child("type").getValue().toString().equals("location")) {
                     mtype = 3;
-                    if(!item.child("fromID").getValue().toString().equals(fcm_id)){
+                    if (!item.child("fromID").getValue().toString().equals(fcm_id)) {
                         chatlist.add(new ChatList(mtype,
                                 item.child("content").getValue().toString(),
                                 item.getKey(),
@@ -444,6 +445,7 @@ public class ActivityChat extends AppCompatActivity implements ValueEventListene
         public void setMessage(String mMessage) {
             this.mMessage = mMessage;
         }
+
         public ChatList(int mType, String mMessage, String msg_id, int times, String to_id, Bitmap img) {
             this.mType = mType;
             this.mMessage = mMessage;
@@ -452,7 +454,8 @@ public class ActivityChat extends AppCompatActivity implements ValueEventListene
             this.To_id = to_id;
             this.senderPic = img;
 
-    }}
+        }
+    }
 
     public class MyChatAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
         private List<ChatList> list;
@@ -627,7 +630,10 @@ public class ActivityChat extends AppCompatActivity implements ValueEventListene
 
     @Override
     protected void onDestroy() {
+        if (msgRef != null) {
+            msgRef.removeEventListener(this);
+        }
         super.onDestroy();
-        myRef2.removeEventListener(this);
+
     }
 }

@@ -86,7 +86,7 @@ public class ActivityLogin extends AppCompatActivity {
         DeviceToken = prefs.getString("refreshedToken", null);
         firebaseAuth = FirebaseAuth.getInstance();
         database = FirebaseDatabase.getInstance();
-        usersRef = database.getReference("users");
+        usersRef = database.getReference("new_user");
         if (username != null && password != null) {
             editor.putString("drawerstart", "Start");
             editor.commit();
@@ -325,7 +325,7 @@ public class ActivityLogin extends AppCompatActivity {
                             data.setemail(user_email);
                             data.setname(user_name);
                             data.setprofilePicLink("http://tripapi.trippusher.com/restAPIs/uploads/default_profile_pic.jpg");
-                            usersRef.child(fcm_id).child("credentials").setValue(data);
+                            usersRef.child(fcm_id).setValue(data);
                             editor.putString("fcm_id", fcm_id);
                             editor.commit();
                             new AsyncTask<String, String, JSONObject>() {

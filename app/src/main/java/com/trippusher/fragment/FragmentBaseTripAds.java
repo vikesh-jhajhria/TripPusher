@@ -73,7 +73,7 @@ public class FragmentBaseTripAds extends Fragment {
                 fragmentManager.beginTransaction().replace(R.id.fragment_container, fragment).commit();
             }
         });
-        /*if (AppStatus.getInstance(getContext()).isOnline()) {
+        if (AppStatus.getInstance(getContext()).isOnline()) {
             BaseTripData baseTripData = new BaseTripData();
             baseTripData.execute(AirlineId, BaseAirportId);
         } else {
@@ -93,7 +93,7 @@ public class FragmentBaseTripAds extends Fragment {
                         }
                     }
                 }
-        );*/
+        );
         return rootView;
     }
 

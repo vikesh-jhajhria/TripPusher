@@ -81,7 +81,7 @@ public class ActivityTripDetail extends Activity {
         btnMyTrip.setText("You Created This Trip");
         ReceiverFcmId = null;
         database = FirebaseDatabase.getInstance();
-        conversationsRef = database.getReference("users");
+        conversationsRef = database.getReference("new_user");
         new AsyncTask<String, String, JSONObject>() {
             String GetAirlineURL = AppStatus.getbaseurl().baseurl() + "get_trip_details";
 
@@ -151,12 +151,13 @@ public class ActivityTripDetail extends Activity {
         });
         btnMessage.setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) {
-                conversationsRef.addValueEventListener(new ValueEventListener() {
+                conversationsRef.addValueEventListener(valueEventListener = new ValueEventListener() {
                     @Override
                     public void onDataChange(DataSnapshot dataSnapshot) {
                         for (DataSnapshot item : dataSnapshot.getChildren()) {
-                            if (item.child("credentials").child("email").getValue() != null && receiverEmailId.matches(item.child("credentials").child("email").getValue().toString())) {
+                            if (item.child("email").getValue() != null && receiverEmailId.matches(item.child("email").getValue().toString())) {
                                 ReceiverFcmId = item.getKey();
+                                break;
                             }
                         }
                         if (ReceiverFcmId != null) {
@@ -179,76 +180,73 @@ public class ActivityTripDetail extends Activity {
             }
         });
     }
+    private ValueEventListener valueEventListener;
     private void next() {
-        conversationsRef.child(fcm_id).child("conversations").child(ReceiverFcmId).addValueEventListener(new ValueEventListener() {
+        conversationsRef.removeEventListener(valueEventListener);
+        new AsyncTask<String, String, JSONObject>() {
+            String GetAirlineURL = AppStatus.getbaseurl().baseurl() + "trip_message";
+
+            @Override
+            protected void onPreExecute() {
+                super.onPreExecute();
+            }
+
+            @Override
+            protected JSONObject doInBackground(String... args) {
+                ArrayList parametarGetAirline = new ArrayList();
+                parametarGetAirline.add(new BasicNameValuePair("user_id", userId));
+                parametarGetAirline.add(new BasicNameValuePair("trip_id", postTripId));
+                JSONObject json = jsonParser.makeHttpRequest(GetAirlineURL, "POST", parametarGetAirline);
+                return json;
+            }
+
+            protected void onPostExecute(JSONObject result) {
+                try {
+                    if (result != null) {
+                        int status_id = result.getInt("status_id");
+                        Intent intent = new Intent(ActivityTripDetail.this, ActivityChat.class);
+                        intent.putExtra("ReceiverFcmId", ReceiverFcmId);
+                        /*if (status_id == 1) {
+                            //myRef2 = database.getReference("conversations").child(ChatLocation);
+                            Boolean boolean1 = Boolean.valueOf("false");
+                            int time = (int) (System.currentTimeMillis() / 1000);
+
+
+                            ActivityChat.ChatData data = new ActivityChat.ChatData();
+                            data.setcontent("This user has messaged you about Trip ID:" + trip_id);
+                            data.setfromID(fcm_id);
+                            data.setisRead(true);
+                            data.settimestamp(time);
+                            data.settoID(ReceiverFcmId);
+                            data.settype("location");
+                            conversationsRef.child(fcm_id).child("conversations").child(ReceiverFcmId).child("messages").child(conversationsRef.push().getKey()).setValue(data);
+                            data.setisRead(false);
+                            conversationsRef.child(ReceiverFcmId).child("conversations").child(fcm_id).child("messages").child(conversationsRef.push().getKey()).setValue(data);
+
+                            //myRef2.child(myRef2.push().getKey()).setValue(data);
+                            startActivity(intent);
+                            finish();
+                        } else if (status_id == 2) {*/
+                            startActivity(intent);
+                            finish();
+                        //}
+                    } else {
+                        Toast.makeText(getApplicationContext(),
+                                "Unable to retrieve any data from server try Again", Toast.LENGTH_LONG).show();
+                    }
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }
+            }
+        }.execute();
+        /*conversationsRef.child(fcm_id).child("conversations").child(ReceiverFcmId).addValueEventListener(new ValueEventListener() {
             @Override
             public void onDataChange(DataSnapshot dataSnapshot1) {
                 if (dataSnapshot1 != null) {
                     Map map1 = (Map) dataSnapshot1.getValue();
                     if (map1 != null) {
                         ChatLocation = (String) map1.get("location");
-                        new AsyncTask<String, String, JSONObject>() {
-                            String GetAirlineURL = AppStatus.getbaseurl().baseurl() + "trip_message";
 
-                            @Override
-                            protected void onPreExecute() {
-                                super.onPreExecute();
-                            }
-
-                            @Override
-                            protected JSONObject doInBackground(String... args) {
-                                ArrayList parametarGetAirline = new ArrayList();
-                                parametarGetAirline.add(new BasicNameValuePair("user_id", userId));
-                                parametarGetAirline.add(new BasicNameValuePair("trip_id", postTripId));
-                                JSONObject json = jsonParser.makeHttpRequest(GetAirlineURL, "POST", parametarGetAirline);
-                                return json;
-                            }
-
-                            protected void onPostExecute(JSONObject result) {
-                                try {
-                                    if (result != null) {
-                                        int status_id = result.getInt("status_id");
-                                        Intent intent = new Intent(ActivityTripDetail.this, ActivityChat.class);
-                                        Bitmap b = null;
-                                        intent.putExtra("ChatLocation", ChatLocation);
-                                        intent.putExtra("ReceiverFcmId", ReceiverFcmId);
-                                        intent.putExtra("BitmapImage", b);
-                                        if (status_id == 1) {
-                                            myRef2 = database.getReference("conversations").child(ChatLocation);
-                                            Boolean boolean1 = Boolean.valueOf("false");
-                                            int time = (int) (System.currentTimeMillis() / 1000);
-                                            /*ActivityChat.ChatList data = new ActivityChat.ChatList();
-                                            data.setContent("This user has messaged you about Trip ID:" + trip_id);
-                                            data.setFromID(fcm_id);
-                                            data.setIsRead(boolean1);
-                                            data.setTimestamp(time);
-                                            data.setToID(ReceiverFcmId);
-                                            data.setType("location");
-                                            myRef2.child(myRef2.push().getKey()).setValue(data);*/
-
-                                            ActivityChat.ChatData data = new ActivityChat.ChatData();
-                                            data.setcontent("This user has messaged you about Trip ID:" + trip_id);
-                                            data.setfromID(fcm_id);
-                                            data.setisRead(boolean1);
-                                            data.settimestamp(time);
-                                            data.settoID(ReceiverFcmId);
-                                            data.settype("location");
-                                            myRef2.child(myRef2.push().getKey()).setValue(data);
-                                            startActivity(intent);
-                                            finish();
-                                        } else if (status_id == 2) {
-                                            startActivity(intent);
-                                            finish();
-                                        }
-                                    } else {
-                                        Toast.makeText(getApplicationContext(),
-                                                "Unable to retrieve any data from server try Again", Toast.LENGTH_LONG).show();
-                                    }
-                                } catch (JSONException e) {
-                                    e.printStackTrace();
-                                }
-                            }
-                        }.execute();
 
                     } else {
                         String Key = conversationsRef.push().getKey();
@@ -261,6 +259,6 @@ public class ActivityTripDetail extends Activity {
             public void onCancelled(DatabaseError error) {
                 Log.w("TAG", "Failed to read value.", error.toException());
             }
-        });
+        });*/
     }
 }

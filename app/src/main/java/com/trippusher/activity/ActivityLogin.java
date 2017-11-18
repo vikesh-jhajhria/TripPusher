@@ -315,6 +315,7 @@ public class ActivityLogin extends AppCompatActivity {
     }
 
     public void FcmRegistration() {
+
         firebaseAuth.createUserWithEmailAndPassword(user_email, "Simple@123")
                 .addOnCompleteListener(ActivityLogin.this, new OnCompleteListener<AuthResult>() {
                     @Override

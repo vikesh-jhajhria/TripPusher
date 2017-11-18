@@ -206,7 +206,7 @@ public class ActivityTripDetail extends Activity {
                         int status_id = result.getInt("status_id");
                         Intent intent = new Intent(ActivityTripDetail.this, ActivityChat.class);
                         intent.putExtra("ReceiverFcmId", ReceiverFcmId);
-                        /*if (status_id == 1) {
+                        if (status_id == 1) {
                             //myRef2 = database.getReference("conversations").child(ChatLocation);
                             Boolean boolean1 = Boolean.valueOf("false");
                             int time = (int) (System.currentTimeMillis() / 1000);
@@ -226,10 +226,10 @@ public class ActivityTripDetail extends Activity {
                             //myRef2.child(myRef2.push().getKey()).setValue(data);
                             startActivity(intent);
                             finish();
-                        } else if (status_id == 2) {*/
+                        } else if (status_id == 2) {
                             startActivity(intent);
                             finish();
-                        //}
+                        }
                     } else {
                         Toast.makeText(getApplicationContext(),
                                 "Unable to retrieve any data from server try Again", Toast.LENGTH_LONG).show();

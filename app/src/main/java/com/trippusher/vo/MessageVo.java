@@ -68,6 +68,6 @@ public class MessageVo implements Comparable<MessageVo>{
 
     @Override
     public int compareTo(@NonNull MessageVo messageVo) {
-        return this.gettimestamp()+"".compareTo(messageVo.gettimestamp()+"");
+        return String.valueOf(this.gettimestamp()).compareTo(String.valueOf(messageVo.gettimestamp()));
     }
 }

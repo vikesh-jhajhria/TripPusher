@@ -45,6 +45,8 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Locale;
@@ -120,6 +122,16 @@ public class FragmentMessage extends Fragment {
                                     data.settoID(msg.child("toID").getValue().toString());
                                     data.settype(msg.child("type").getValue().toString());
                                     conversationVo.setMessageVo(data);
+                                    try {
+                                        Collections.sort(conversationList, new Comparator<ConversationVo>() {
+                                            @Override
+                                            public int compare(final ConversationVo object1, final ConversationVo object2) {
+                                                return object2.getMessageVo().compareTo(object1.getMessageVo());
+                                            }
+                                        });
+                                    } catch (Exception e) {
+
+                                    }
 
                                     adapter.notifyDataSetChanged();
                                 }
@@ -134,28 +146,38 @@ public class FragmentMessage extends Fragment {
                         });
                     }
 
-                        database.getReference("new_user").addValueEventListener(lastMsgListener = new ValueEventListener() {
-                            @Override
-                            public void onDataChange(DataSnapshot dataSnapshot) {
-                                for(ConversationVo vo : conversationList) {
-                                    for (DataSnapshot user : dataSnapshot.getChildren()) {
-                                        if (user.getKey().equalsIgnoreCase(vo.getKey())) {
-                                            vo.setName(user.child("name").getValue().toString());
-                                            vo.setEmail(user.child("email").getValue().toString());
-                                            break;
-                                        }
+                    database.getReference("new_user").addValueEventListener(lastMsgListener = new ValueEventListener() {
+                        @Override
+                        public void onDataChange(DataSnapshot dataSnapshot) {
+                            for (ConversationVo vo : conversationList) {
+                                for (DataSnapshot user : dataSnapshot.getChildren()) {
+                                    if (user.getKey().equalsIgnoreCase(vo.getKey())) {
+                                        vo.setName(user.child("name").getValue().toString());
+                                        vo.setEmail(user.child("email").getValue().toString());
+                                        break;
                                     }
                                 }
-                                //database.getReference("new_user").removeEventListener(lastMsgListener);
-                                adapter.notifyDataSetChanged();
+                            }
+                            //database.getReference("new_user").removeEventListener(lastMsgListener);
+                            try {
+                                Collections.sort(conversationList, new Comparator<ConversationVo>() {
+                                    @Override
+                                    public int compare(final ConversationVo object1, final ConversationVo object2) {
+                                        return object2.getMessageVo().compareTo(object1.getMessageVo());
+                                    }
+                                });
+                            } catch (Exception e) {
 
                             }
+                            adapter.notifyDataSetChanged();
 
-                            @Override
-                            public void onCancelled(DatabaseError databaseError) {
+                        }
 
-                            }
-                        });
+                        @Override
+                        public void onCancelled(DatabaseError databaseError) {
+
+                        }
+                    });
 
                 }
 
@@ -168,9 +190,8 @@ public class FragmentMessage extends Fragment {
             Toast.makeText(getContext(), "Please check network connection and try again", Toast.LENGTH_SHORT).show();
         }
     }
+
     ValueEventListener lastMsgListener = null;
-
-
 
 
     public class ConversationAdapter extends RecyclerView.Adapter<ConversationAdapter.MyViewHolder> {
@@ -193,11 +214,11 @@ public class FragmentMessage extends Fragment {
             ViewHolder.Image.setImageResource(R.drawable.userc);
             ViewHolder.txtMsgName.setText(model.getName());
             MessageVo lastMessage = model.getMessageVo();
-            if(lastMessage != null) {
+            if (lastMessage != null) {
                 ViewHolder.txtMsgMessage.setText(lastMessage.getcontent());
 
 
-                if (lastMessage.getisRead().equals("false")) {
+                if (!lastMessage.getisRead()) {
                     if (!lastMessage.getfromID().equals(fcm_id)) {
                         ViewHolder.txtMsgName.setTypeface(null, Typeface.BOLD);
                         ViewHolder.txtMsgMessage.setTextColor(Color.BLUE);
@@ -239,7 +260,7 @@ public class FragmentMessage extends Fragment {
                 @Override
                 public void onClick(View view) {
                     Intent intent = new Intent(getContext(), ActivityChat.class);
-                    intent.putExtra("ReceiverFcmId",model.getKey());
+                    intent.putExtra("ReceiverFcmId", model.getKey());
                     intent.putExtra("BitmapImage", ViewHolder.Image.getDrawingCache());
                     getContext().startActivity(intent);
 

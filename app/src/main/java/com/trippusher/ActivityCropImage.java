@@ -51,7 +51,7 @@ public class ActivityCropImage extends AppCompatActivity {
         setContentView(R.layout.activity_crop_image);
         mCropImageView = (CropImageView) findViewById(R.id.CropImageView);
         database = FirebaseDatabase.getInstance();
-        usersRef = database.getReference("users");
+        usersRef = database.getReference("new_user");
         prefs = PreferenceManager.getDefaultSharedPreferences(this);
         editor = prefs.edit();
         UserId = prefs.getString("userId", null);
@@ -110,7 +110,7 @@ public class ActivityCropImage extends AppCompatActivity {
                             if (jObject.getString("status_id").equals("1")) {
                                 //Log.e("responce....::>>>", response);
                                 image_name = jObject.getString("image_name");
-                                usersRef.child(fcm_id).child("credentials").child("profilePicLink").setValue("http://tripapi.trippusher.com/restAPIs/uploads/"+image_name);
+                                usersRef.child(fcm_id).child("profilePicLink").setValue("http://tripapi.trippusher.com/restAPIs/uploads/"+image_name);
                                 new AsyncTask<String, String, JSONObject>() {
                                     String GetAirlineURL = AppStatus.getbaseurl().baseurl() + "update_profile_image/";
 

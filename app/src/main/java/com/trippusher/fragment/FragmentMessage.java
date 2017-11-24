@@ -33,6 +33,7 @@ import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.Query;
 import com.google.firebase.database.ValueEventListener;
+import com.squareup.picasso.Picasso;
 import com.trippusher.AppStatus;
 import com.trippusher.R;
 import com.trippusher.activity.ActivityChat;
@@ -154,6 +155,7 @@ public class FragmentMessage extends Fragment {
                                     if (user.getKey().equalsIgnoreCase(vo.getKey())) {
                                         vo.setName(user.child("name").getValue().toString());
                                         vo.setEmail(user.child("email").getValue().toString());
+                                        vo.setImage(user.child("profilePicLink").getValue().toString());
                                         break;
                                     }
                                 }
@@ -212,6 +214,9 @@ public class FragmentMessage extends Fragment {
             final ConversationVo model = mModelList.get(position);
 
             ViewHolder.Image.setImageResource(R.drawable.userc);
+            if(model.getImage() != null && !model.getImage().isEmpty()) {
+                Picasso.with(getContext()).load(model.getImage()).placeholder(R.drawable.userc).into(ViewHolder.Image);
+            }
             ViewHolder.txtMsgName.setText(model.getName());
             MessageVo lastMessage = model.getMessageVo();
             if (lastMessage != null) {

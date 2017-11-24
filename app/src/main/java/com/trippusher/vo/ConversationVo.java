@@ -12,8 +12,16 @@ public class ConversationVo {
     private String key = "";
     private String name = "";
     private String email = "";
+    private String image = "";
     private MessageVo messageVo;
 
+    public String getImage() {
+        return image;
+    }
+
+    public void setImage(String image) {
+        this.image = image;
+    }
     public String getKey() {
         return key;
     }

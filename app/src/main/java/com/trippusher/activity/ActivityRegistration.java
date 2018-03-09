@@ -45,8 +45,11 @@ import java.util.List;
  */
 
 public class ActivityRegistration extends AppCompatActivity {
+    static final String ITEM_SKU = "com.trippusher.monthly5";
+    static final String ITEM_SKUs = "com.trippusher.yearly50";
+    private static final String TAG = "InAppBilling";
     String FirstName, LastName, userName, userPass, VPassword, userMobile, userEmail;
-    TextView txtHeader, spiAir, spiBase, Subscription, txtTandC;    
+    TextView txtHeader, spiAir, spiBase, Subscription, txtTandC;
     ImageView Back;
     EditText user_name, user_mobile, user_pass, txtFirstName, txtLastName, user_Email, VerifyPassword;
     ArrayAdapter adapter, BaseAirAdapter;
@@ -57,16 +60,98 @@ public class ActivityRegistration extends AppCompatActivity {
     ListView AirlineListView, BaseAirportListView;
     SharedPreferences prefs;
     SharedPreferences.Editor editor;
-    private List<AirlineList> AirlineList;
-    private List<AirportList> AirportList;
     JSONParser jsonParser = new JSONParser();
     int radio_id;
     CheckBox chkTandC;
     IabHelper mHelper;
-    private static final String TAG = "InAppBilling";    
-    static final String ITEM_SKU = "com.trippusher.monthly5";
-    static final String ITEM_SKUs = "com.trippusher.yearly50";
-    String base64EncodedPublicKey ="MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAl6C3QCqJ0J8SsjggS3ENyRnBBap4SO6MHyp9BqsjuR6ZJNUZyVwLhUXOu36ZZaZDXuHkOrdSVY0su2s7AZzjNigfxZcAFio40gHy/ev//ZDodKsTOum1WI8inQ6CXDiAbcU3tWogsFYGnrH5qUFVcv7tHmi0mLXWPC2gFNCNg/tUwcuQg8h6I02spPk+nIhg7KyGVfDKmZ11mdgskEZ5OQZi6OVGAzVUanOplHwYAcUlonZiY+uEckFRfNuEJfZKC2liqZ7gWYAcCj3hyVfdOcXzI2Gw4IIUCIjRs02l12T8zD/BXqEyGhhkEsxRzttzdz7Ny3qeYkFmV9+dmJjUiwIDAQAB";
+    String base64EncodedPublicKey = "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAl6C3QCqJ0J8SsjggS3ENyRnBBap4SO6MHyp9BqsjuR6ZJNUZyVwLhUXOu36ZZaZDXuHkOrdSVY0su2s7AZzjNigfxZcAFio40gHy/ev//ZDodKsTOum1WI8inQ6CXDiAbcU3tWogsFYGnrH5qUFVcv7tHmi0mLXWPC2gFNCNg/tUwcuQg8h6I02spPk+nIhg7KyGVfDKmZ11mdgskEZ5OQZi6OVGAzVUanOplHwYAcUlonZiY+uEckFRfNuEJfZKC2liqZ7gWYAcCj3hyVfdOcXzI2Gw4IIUCIjRs02l12T8zD/BXqEyGhhkEsxRzttzdz7Ny3qeYkFmV9+dmJjUiwIDAQAB";
+    IabHelper.OnIabPurchaseFinishedListener mPurchaseFinishedListener
+            = new IabHelper.OnIabPurchaseFinishedListener() {
+        public void onIabPurchaseFinished(IabResult result,
+                                          Purchase purchase) {
+            if (result.isFailure()) {
+                //return;
+                Toast.makeText(getApplicationContext(), "User cancelled", Toast.LENGTH_LONG).show();
+                //Log.d("cancel result", result.toString());
+            } else if (purchase.getSku().equals(ITEM_SKU)) {
+                //consumeItem();
+                //buyButton.setEnabled(false);
+                Toast.makeText(getApplicationContext(), result.toString(), Toast.LENGTH_LONG).show();
+            }
+        }
+    };
+    IabHelper.OnConsumeFinishedListener mConsumeFinishedListener =
+            new IabHelper.OnConsumeFinishedListener() {
+                public void onConsumeFinished(Purchase purchase, IabResult result) {
+
+                    if (result.isSuccess()) {
+                        //clickButton.setEnabled(true);
+                        new AsyncTask<String, String, JSONObject>() {
+                            String GetAirlineURL = AppStatus.getbaseurl().baseurl() + "create_user/";
+
+                            @Override
+                            protected void onPreExecute() {
+                                super.onPreExecute();
+                            }
+
+                            @Override
+                            protected JSONObject doInBackground(String... args) {
+                                ArrayList parametarGetAirport = new ArrayList();
+                                parametarGetAirport.add(new BasicNameValuePair("airline_id", airline_id));
+                                parametarGetAirport.add(new BasicNameValuePair("base_airport_id", airport_id));
+                                parametarGetAirport.add(new BasicNameValuePair("first_name", FirstName));
+                                parametarGetAirport.add(new BasicNameValuePair("last_name", LastName));
+                                parametarGetAirport.add(new BasicNameValuePair("user_name", userName));
+                                String mobil = userMobile.replace("(", "").replace(")", "").replace("-", "").replace(" ", "");
+                                parametarGetAirport.add(new BasicNameValuePair("phone_no", mobil));
+                                parametarGetAirport.add(new BasicNameValuePair("password", userPass));
+                                parametarGetAirport.add(new BasicNameValuePair("email", userEmail));
+                                parametarGetAirport.add(new BasicNameValuePair("subscription_plan", "" + radio_id));
+                                JSONObject json = jsonParser.makeHttpRequest(GetAirlineURL, "POST", parametarGetAirport);
+                                return json;
+                            }
+
+                            protected void onPostExecute(JSONObject result) {
+                                try {
+                                    if (result != null) {
+                                        int status_id = result.getInt("status_id");
+                                        String MSG = result.getString("status_msg");
+                                        if (status_id != 0) {
+                                            Toast.makeText(getApplicationContext(), MSG, Toast.LENGTH_LONG).show();
+                                            Intent intent = new Intent(getApplication(), ActivityLogin.class);
+                                            startActivity(intent);
+                                        } else {
+                                            Toast.makeText(getApplicationContext(), MSG, Toast.LENGTH_LONG).show();
+                                        }
+                                    } else {
+                                        Toast.makeText(getApplicationContext(), "Unable to retrieve any data from server", Toast.LENGTH_LONG).show();
+                                    }
+                                } catch (JSONException e) {
+                                    e.printStackTrace();
+                                }
+
+                            }
+                        }.execute();
+                    } else {
+                        Toast.makeText(getApplicationContext(), result.toString(), Toast.LENGTH_LONG).show();
+                    }
+                }
+            };
+    IabHelper.QueryInventoryFinishedListener mReceivedInventoryListener
+            = new IabHelper.QueryInventoryFinishedListener() {
+        public void onQueryInventoryFinished(IabResult result,
+                                             Inventory inventory) {
+
+            if (result.isFailure()) {
+                Toast.makeText(getApplicationContext(), result.toString(), Toast.LENGTH_LONG).show();
+            } else {
+                mHelper.consumeAsync(inventory.getPurchase(ITEM_SKU),
+                        mConsumeFinishedListener);
+            }
+        }
+    };
+    private List<AirlineList> AirlineList;
+    private List<AirportList> AirportList;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -265,20 +350,18 @@ public class ActivityRegistration extends AppCompatActivity {
                         Toast.makeText(getApplicationContext(), "Invalid email address", Toast.LENGTH_SHORT).show();
                     } else {
                         if (radio_5.isChecked()) {
-                            radio_id = 3;
-                            if (chkTandC.isChecked()){
+                            radio_id = 1;
+                            if (chkTandC.isChecked()) {
                                 mHelper.launchPurchaseFlow(ActivityRegistration.this, ITEM_SKU, 10001, mPurchaseFinishedListener, "com.trippusher.monthly5");
-                            }
-                            else {
+                            } else {
                                 Toast.makeText(getApplicationContext(), "Please check your terms and conditions", Toast.LENGTH_LONG).show();
                             }
 
                         } else if (radio_50.isChecked()) {
-                            radio_id = 30;
-                            if (chkTandC.isChecked()){
+                            radio_id = 2;
+                            if (chkTandC.isChecked()) {
                                 mHelper.launchPurchaseFlow(ActivityRegistration.this, ITEM_SKUs, 10001, mPurchaseFinishedListener, "com.trippusher.yearly50");
-                            }
-                            else {
+                            } else {
                                 Toast.makeText(getApplicationContext(), "Please check your terms and conditions", Toast.LENGTH_LONG).show();
                             }
                         } else {
@@ -390,97 +473,11 @@ public class ActivityRegistration extends AppCompatActivity {
         }
     }
 
-    IabHelper.OnIabPurchaseFinishedListener mPurchaseFinishedListener
-            = new IabHelper.OnIabPurchaseFinishedListener() {
-        public void onIabPurchaseFinished(IabResult result,
-                                          Purchase purchase) {
-            if (result.isFailure()) {
-                //return;
-                Toast.makeText(getApplicationContext(), "User cancelled", Toast.LENGTH_LONG).show();
-                //Log.d("cancel result", result.toString());
-            } else if (purchase.getSku().equals(ITEM_SKU)) {
-                //consumeItem();
-                //buyButton.setEnabled(false);
-                Toast.makeText(getApplicationContext(), result.toString(), Toast.LENGTH_LONG).show();
-            }
-        }
-    };
-    IabHelper.OnConsumeFinishedListener mConsumeFinishedListener =
-            new IabHelper.OnConsumeFinishedListener() {
-                public void onConsumeFinished(Purchase purchase, IabResult result) {
-
-                    if (result.isSuccess()) {
-                        //clickButton.setEnabled(true);
-                        new AsyncTask<String, String, JSONObject>() {
-                            String GetAirlineURL = AppStatus.getbaseurl().baseurl() + "create_user/";
-
-                            @Override
-                            protected void onPreExecute() {
-                                super.onPreExecute();
-                            }
-
-                            @Override
-                            protected JSONObject doInBackground(String... args) {
-                                ArrayList parametarGetAirport = new ArrayList();
-                                parametarGetAirport.add(new BasicNameValuePair("airline_id", airline_id));
-                                parametarGetAirport.add(new BasicNameValuePair("base_airport_id", airport_id));
-                                parametarGetAirport.add(new BasicNameValuePair("first_name", FirstName));
-                                parametarGetAirport.add(new BasicNameValuePair("last_name", LastName));
-                                parametarGetAirport.add(new BasicNameValuePair("user_name", userName));
-                                String mobil = userMobile.replace("(", "").replace(")", "").replace("-", "").replace(" ", "");
-                                parametarGetAirport.add(new BasicNameValuePair("phone_no", mobil));
-                                parametarGetAirport.add(new BasicNameValuePair("password", userPass));
-                                parametarGetAirport.add(new BasicNameValuePair("email", userEmail));
-                                JSONObject json = jsonParser.makeHttpRequest(GetAirlineURL, "POST", parametarGetAirport);
-                                return json;
-                            }
-
-                            protected void onPostExecute(JSONObject result) {
-                                try {
-                                    if (result != null) {
-                                        int status_id = result.getInt("status_id");
-                                        String MSG = result.getString("status_msg");
-                                        if (status_id != 0) {
-                                            Toast.makeText(getApplicationContext(), MSG, Toast.LENGTH_LONG).show();
-                                            Intent intent = new Intent(getApplication(), ActivityLogin.class);
-                                            startActivity(intent);
-                                        } else {
-                                            Toast.makeText(getApplicationContext(), MSG, Toast.LENGTH_LONG).show();
-                                        }
-                                    } else {
-                                        Toast.makeText(getApplicationContext(), "Unable to retrieve any data from server", Toast.LENGTH_LONG).show();
-                                    }
-                                } catch (JSONException e) {
-                                    e.printStackTrace();
-                                }
-
-                            }
-                        }.execute();
-                    } else {
-                        Toast.makeText(getApplicationContext(), result.toString(), Toast.LENGTH_LONG).show();
-                    }
-                }
-            };
-
     public void consumeItem()
 
     {
         mHelper.queryInventoryAsync(mReceivedInventoryListener);
     }
-
-    IabHelper.QueryInventoryFinishedListener mReceivedInventoryListener
-            = new IabHelper.QueryInventoryFinishedListener() {
-        public void onQueryInventoryFinished(IabResult result,
-                                             Inventory inventory) {
-
-            if (result.isFailure()) {
-                Toast.makeText(getApplicationContext(), result.toString(), Toast.LENGTH_LONG).show();
-            } else {
-                mHelper.consumeAsync(inventory.getPurchase(ITEM_SKU),
-                        mConsumeFinishedListener);
-            }
-        }
-    };
 
     @Override
     public void onDestroy() {
